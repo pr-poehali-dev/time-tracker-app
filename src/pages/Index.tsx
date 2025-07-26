@@ -223,53 +223,7 @@ export default function Index() {
               Сегодня: {formatDuration(totalTimeToday)}
             </Badge>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Icon name="Plus" size={18} className="mr-2" />
-                  Новый проект
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Создать новый проект</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Название проекта</Label>
-                    <Input
-                      id="name"
-                      value={newProject.name}
-                      onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Введите название..."
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Описание</Label>
-                    <Input
-                      id="description"
-                      value={newProject.description}
-                      onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Краткое описание проекта..."
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="goal">Цель (часов в день)</Label>
-                    <Input
-                      id="goal"
-                      type="number"
-                      value={newProject.goalTime}
-                      onChange={(e) => setNewProject(prev => ({ ...prev, goalTime: parseInt(e.target.value) || 8 }))}
-                      min="1"
-                      max="24"
-                    />
-                  </div>
-                  <Button onClick={addProject} className="w-full">
-                    Создать проект
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+
           </div>
         </div>
 
@@ -305,7 +259,7 @@ export default function Index() {
         )}
 
         <Tabs defaultValue="home" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="home">
               <Icon name="Home" size={18} className="mr-2" />
               Главная
@@ -317,10 +271,6 @@ export default function Index() {
             <TabsTrigger value="analytics">
               <Icon name="BarChart3" size={18} className="mr-2" />
               Аналитика
-            </TabsTrigger>
-            <TabsTrigger value="settings">
-              <Icon name="Settings" size={18} className="mr-2" />
-              Настройки
             </TabsTrigger>
           </TabsList>
 
@@ -461,6 +411,60 @@ export default function Index() {
           </TabsContent>
 
           <TabsContent value="projects" className="space-y-4">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Управление проектами</h2>
+                <p className="text-gray-600">Создавайте, редактируйте и удаляйте проекты</p>
+              </div>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Icon name="Plus" size={18} className="mr-2" />
+                    Добавить проект
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Создать новый проект</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Название проекта</Label>
+                      <Input
+                        id="name"
+                        value={newProject.name}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Введите название..."
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Описание</Label>
+                      <Input
+                        id="description"
+                        value={newProject.description}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Краткое описание проекта..."
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="goal">Цель (часов в день)</Label>
+                      <Input
+                        id="goal"
+                        type="number"
+                        value={newProject.goalTime}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, goalTime: parseInt(e.target.value) || 8 }))}
+                        min="1"
+                        max="24"
+                      />
+                    </div>
+                    <Button onClick={addProject} className="w-full">
+                      Создать проект
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {projects.map((project) => {
                 const currentTime = getCurrentTime(project);
@@ -471,7 +475,7 @@ export default function Index() {
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full ${project.color}`} />
+                          <div className={`w-4 h-4 rounded-full ${project.color}`} />
                           <CardTitle className="text-lg">{project.name}</CardTitle>
                         </div>
                         <DropdownMenu>
@@ -495,34 +499,78 @@ export default function Index() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+                      <p className="text-sm text-gray-600 mt-2">{project.description}</p>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Прогресс цели</span>
-                          <span className="font-medium">
-                            {formatDuration(currentTime)} / {formatDuration(project.goalTime)}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700">Цель в день</span>
+                          <span className="text-sm font-bold text-blue-600">
+                            {formatDuration(project.goalTime)}
                           </span>
                         </div>
-                        <Progress value={progress} className="h-2" />
-                        <div className="text-xs text-gray-500 text-center">
-                          {progress.toFixed(0)}% выполнено
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700">Потрачено времени</span>
+                          <span className="text-sm font-bold text-green-600">
+                            {formatDuration(currentTime)}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Прогресс</span>
+                            <span>{progress.toFixed(0)}%</span>
+                          </div>
+                          <Progress value={progress} className="h-2" />
                         </div>
                       </div>
                       
-                      <div className="text-center">
-                        <div className="text-xl font-mono font-bold text-gray-900 mb-2">
-                          {formatTime(currentTime)}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Всего времени потрачено
-                        </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => startEditProject(project)}
+                          className="flex-1"
+                        >
+                          <Icon name="Edit" size={14} className="mr-1" />
+                          Изменить
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setDeleteProjectId(project.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Icon name="Trash2" size={14} />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
                 );
               })}
+              
+              {projects.length === 0 && (
+                <div className="col-span-full">
+                  <Card className="border-dashed border-2 border-gray-300">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <Icon name="FolderPlus" size={48} className="text-gray-400 mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Нет проектов</h3>
+                      <p className="text-gray-500 mb-4 text-center">
+                        Создайте свой первый проект для отслеживания времени
+                      </p>
+                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button>
+                            <Icon name="Plus" size={16} className="mr-2" />
+                            Создать проект
+                          </Button>
+                        </DialogTrigger>
+                      </Dialog>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -627,27 +675,7 @@ export default function Index() {
             </div>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon name="User" size={20} />
-                  Настройки аккаунта
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-center py-12 text-gray-500">
-                  <div className="text-center">
-                    <Icon name="Settings2" size={48} className="mx-auto mb-3 opacity-50" />
-                    <p className="text-lg font-medium">Настройки в разработке</p>
-                    <p className="text-sm">
-                      Скоро здесь появятся настройки профиля, уведомления и интеграции
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
 
         {/* Edit Project Dialog */}
