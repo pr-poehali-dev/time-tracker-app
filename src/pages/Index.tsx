@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 
@@ -62,7 +64,10 @@ export default function Index() {
 
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [newProject, setNewProject] = useState({ name: '', description: '', goalTime: 8 });
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -153,6 +158,29 @@ export default function Index() {
       setNewProject({ name: '', description: '', goalTime: 8 });
       setIsDialogOpen(false);
     }
+  };
+
+  const updateProject = () => {
+    if (editingProject && editingProject.name.trim()) {
+      setProjects(prev => prev.map(p => 
+        p.id === editingProject.id 
+          ? { ...editingProject, goalTime: editingProject.goalTime * 3600 }
+          : p
+      ));
+      setEditingProject(null);
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const deleteProject = (projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    setTimeEntries(prev => prev.filter(entry => entry.projectId !== projectId));
+    setDeleteProjectId(null);
+  };
+
+  const startEditProject = (project: Project) => {
+    setEditingProject({ ...project, goalTime: Math.floor(project.goalTime / 3600) });
+    setIsEditDialogOpen(true);
   };
 
   // Обновляем таймер каждую секунду
@@ -274,8 +302,12 @@ export default function Index() {
           </Card>
         )}
 
-        <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="home" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="home">
+              <Icon name="Home" size={18} className="mr-2" />
+              Главная
+            </TabsTrigger>
             <TabsTrigger value="projects">
               <Icon name="FolderOpen" size={18} className="mr-2" />
               Проекты
@@ -290,7 +322,7 @@ export default function Index() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="projects" className="space-y-4">
+          <TabsContent value="home" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {projects.map((project) => {
                 const currentTime = getCurrentTime(project);
@@ -340,6 +372,72 @@ export default function Index() {
                           <Icon name={project.isActive ? "Pause" : "Play"} size={18} className="mr-2" />
                           {project.isActive ? 'Стоп' : 'Старт'}
                         </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="projects" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project) => {
+                const currentTime = getCurrentTime(project);
+                const progress = Math.min((currentTime / project.goalTime) * 100, 100);
+                
+                return (
+                  <Card key={project.id} className="transition-all hover:shadow-md">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${project.color}`} />
+                          <CardTitle className="text-lg">{project.name}</CardTitle>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Icon name="MoreHorizontal" size={16} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => startEditProject(project)}>
+                              <Icon name="Edit" size={16} className="mr-2" />
+                              Редактировать
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setDeleteProjectId(project.id)}
+                              className="text-red-600"
+                            >
+                              <Icon name="Trash2" size={16} className="mr-2" />
+                              Удалить
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Прогресс цели</span>
+                          <span className="font-medium">
+                            {formatDuration(currentTime)} / {formatDuration(project.goalTime)}
+                          </span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                        <div className="text-xs text-gray-500 text-center">
+                          {progress.toFixed(0)}% выполнено
+                        </div>
+                      </div>
+                      
+                      <div className="text-center">
+                        <div className="text-xl font-mono font-bold text-gray-900 mb-2">
+                          {formatTime(currentTime)}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Всего времени потрачено
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -471,6 +569,72 @@ export default function Index() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Project Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Редактировать проект</DialogTitle>
+            </DialogHeader>
+            {editingProject && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-name">Название проекта</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingProject.name}
+                    onChange={(e) => setEditingProject(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    placeholder="Введите название..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-description">Описание</Label>
+                  <Input
+                    id="edit-description"
+                    value={editingProject.description}
+                    onChange={(e) => setEditingProject(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    placeholder="Краткое описание проекта..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-goal">Цель (часов в день)</Label>
+                  <Input
+                    id="edit-goal"
+                    type="number"
+                    value={editingProject.goalTime}
+                    onChange={(e) => setEditingProject(prev => prev ? { ...prev, goalTime: parseInt(e.target.value) || 8 } : null)}
+                    min="1"
+                    max="24"
+                  />
+                </div>
+                <Button onClick={updateProject} className="w-full">
+                  Сохранить изменения
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deleteProjectId} onOpenChange={() => setDeleteProjectId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить проект?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Это действие нельзя отменить. Проект и вся связанная с ним статистика времени будут удалены навсегда.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => deleteProjectId && deleteProject(deleteProjectId)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Удалить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
