@@ -70,6 +70,10 @@ export default function Index() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [projectsPerPage] = useState(6);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -185,6 +189,32 @@ export default function Index() {
     setIsEditDialogOpen(true);
   };
 
+  const getCurrentTime = (project: Project) => {
+    if (project.isActive && project.startTime) {
+      const elapsed = Math.floor((Date.now() - project.startTime) / 1000);
+      return project.timeSpent + elapsed;
+    }
+    return project.timeSpent;
+  };
+
+  // Pagination logic
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const paginatedProjects = projects.slice(indexOfFirstProject, indexOfLastProject);
+  const totalPages = Math.ceil(projects.length / projectsPerPage);
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   // Обновляем таймер каждую секунду
   useEffect(() => {
     const interval = setInterval(() => {
@@ -209,21 +239,48 @@ export default function Index() {
   const activeProject = projects.find(p => p.isActive);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+    <div className="min-h-screen bg-slate-50 p-6 flex flex-col">
+      <div className="max-w-7xl mx-auto space-y-6 flex-1">
+        {/* Header with Auth Panel */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Time Tracker</h1>
             <p className="text-gray-600 mt-1">Отслеживайте время и достигайte целей</p>
           </div>
+          
+          {/* Auth Panel */}
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="text-sm px-3 py-1">
               <Icon name="Clock" size={16} className="mr-1" />
               Сегодня: {formatDuration(totalTimeToday)}
             </Badge>
             
-
+            <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border shadow-sm">
+              <Icon name="User" size={20} className="text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Иван Петров</span>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Icon name="Settings" size={20} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Icon name="User" size={16} className="mr-2" />
+                  Профиль
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Icon name="Settings" size={16} className="mr-2" />
+                  Настройки
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-600">
+                  <Icon name="LogOut" size={16} className="mr-2" />
+                  Выйти
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -466,7 +523,7 @@ export default function Index() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {projects.map((project) => {
+              {paginatedProjects.map((project) => {
                 const currentTime = getCurrentTime(project);
                 const progress = Math.min((currentTime / project.goalTime) * 100, 100);
                 
@@ -571,6 +628,51 @@ export default function Index() {
                   </Card>
                 </div>
               )}
+            </div>
+
+            {/* Pagination */}
+            {projects.length > projectsPerPage && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-500">
+                  Показано {indexOfFirstProject + 1}-{Math.min(indexOfLastProject, projects.length)} из {projects.length} проектов
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={prevPage}
+                    disabled={currentPage === 1}
+                  >
+                    <Icon name="ChevronLeft" size={16} className="mr-1" />
+                    Назад
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    Вперёд
+                    <Icon name="ChevronRight" size={16} className="ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
             </div>
           </TabsContent>
 
@@ -744,6 +846,39 @@ export default function Index() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      
+      {/* Footer Navigation */}
+      <footer className="bg-white border-t border-gray-200 shadow-lg mt-auto">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-center">
+            <div className="flex items-center gap-8">
+              <TabsTrigger 
+                value="home" 
+                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-50 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 transition-colors"
+              >
+                <Icon name="Home" size={20} />
+                <span className="text-xs font-medium">Главная</span>
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="projects" 
+                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-50 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 transition-colors"
+              >
+                <Icon name="FolderOpen" size={20} />
+                <span className="text-xs font-medium">Проекты</span>
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="analytics" 
+                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-50 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 transition-colors"
+              >
+                <Icon name="BarChart3" size={20} />
+                <span className="text-xs font-medium">Аналитика</span>
+              </TabsTrigger>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
