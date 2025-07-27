@@ -460,6 +460,7 @@ export default function Index() {
                   </Card>
                 </div>
               )}
+            </div>
           </TabsContent>
 
           <TabsContent value="projects" className="space-y-4">
