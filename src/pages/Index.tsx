@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
@@ -224,13 +224,7 @@ export default function Index() {
     return () => clearInterval(interval);
   }, []);
 
-  const getCurrentTime = (project: Project) => {
-    if (project.isActive && project.startTime) {
-      const currentDuration = Math.floor((Date.now() - project.startTime) / 1000);
-      return project.timeSpent + currentDuration;
-    }
-    return project.timeSpent;
-  };
+
 
   const totalTimeToday = timeEntries
     .filter(entry => new Date(entry.startTime).toDateString() === new Date().toDateString())
@@ -283,6 +277,8 @@ export default function Index() {
             </DropdownMenu>
           </div>
         </div>
+
+        <Tabs defaultValue="home" className="w-full">
 
         {/* Active Timer */}
         {activeProject && (
@@ -778,8 +774,6 @@ export default function Index() {
           </TabsContent>
 
 
-        </Tabs>
-
         {/* Edit Project Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
@@ -879,6 +873,7 @@ export default function Index() {
           </div>
         </div>
       </footer>
+        </Tabs>
     </div>
   );
 }
